@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 import search.utils.Conventions;
 import search.utils.FileUtils;
 import search.utils.ReflectionUtils;
-import search.utils.StringUtils;
 
 public class DBUtils {
 	public static DBMode mode = DBMode.DEVELOPMENT;
@@ -25,7 +24,8 @@ public class DBUtils {
 	public static <T> T queryObject(Class<T> clazz, int id) throws Exception {
 		Class.forName("org.sqlite.JDBC");
 		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
-		String sql = "select * from " + StringUtils.tableStyle(clazz.getSimpleName()) + " where id = ?;";
+		String tableName = Conventions.getTableName(clazz);
+		String sql = "select * from " + tableName + " where id = ?;";
 		logger.debug(sql);
 		PreparedStatement pstmt = conn.prepareStatement(sql);
 		pstmt.setInt(1, id);
@@ -41,6 +41,9 @@ public class DBUtils {
 				setter.invoke(result, data);
 			}
 		}
+		rs.close();
+		pstmt.close();
+		conn.close();
 		return result;
 	}
 

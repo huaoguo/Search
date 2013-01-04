@@ -2,6 +2,7 @@ package search.utils;
 
 import search.db.DBMode;
 import search.db.DBUtils;
+import search.model.Dict;
 import junit.framework.TestCase;
 
 public class ConventionsTest extends TestCase {
@@ -22,5 +23,10 @@ public class ConventionsTest extends TestCase {
 		assertEquals("db/development/init_data.sql", Conventions.getSQLFilePath("init_data"));
 		DBUtils.mode = DBMode.PRODUCTION;
 		assertEquals("db/production/init_data.sql", Conventions.getSQLFilePath("init_data"));
+	}
+	
+	public void testGetTableName(){
+		assertEquals("dict", Conventions.getTableName(Dict.class));
+		assertEquals("string_utils", Conventions.getTableName(StringUtils.class));
 	}
 }

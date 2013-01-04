@@ -10,4 +10,9 @@ public class Conventions {
 	public static String getSQLFilePath(String filename){
 		return "db/" + DBUtils.mode.toString().toLowerCase() + "/" + filename + ".sql";
 	}
+	
+	@SuppressWarnings("rawtypes")
+	public static String getTableName(Class clazz){
+		return StringUtils.tableStyle(clazz.getSimpleName());
+	}
 }
