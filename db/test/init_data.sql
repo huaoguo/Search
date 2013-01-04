@@ -1,0 +1,1 @@
+insert into dict(value) values('test');
