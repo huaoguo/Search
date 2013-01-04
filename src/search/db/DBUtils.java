@@ -1,14 +1,18 @@
 package search.db;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -82,6 +86,44 @@ public class DBUtils {
 		runSqlFile(conn,Conventions.getSQLFilePath("create_table"));
 		runSqlFile(conn,Conventions.getSQLFilePath("init_data"));
 		conn.commit();
+		conn.close();
+	}
+
+	public static void storeObject(Object data) throws ClassNotFoundException, SQLException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		Class.forName("org.sqlite.JDBC");
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
+		String tableName = Conventions.getTableName(data.getClass());
+		DatabaseMetaData dbmd = conn.getMetaData();
+		ResultSet rs = dbmd.getColumns(null, "%", tableName, "%");
+		List<String> columns = new ArrayList<>();
+		StringBuilder sql = new StringBuilder();
+		sql.append("insert into ").append(tableName).append("(");
+		while(rs.next()){
+			String columnName = rs.getString("COLUMN_NAME");
+			if(!columnName.equals("id")){
+				columns.add(columnName);
+				sql.append(columnName).append(",");
+			}
+		}
+		rs.close();
+		sql.replace(sql.length()-1, sql.length(), ") values(");
+		for (String columnName : columns) {
+			Method getter = ReflectionUtils.getGetter(data.getClass(), columnName);
+			Object field = getter.invoke(data, new Object[0]);
+			sql.append("'").append(field.toString()).append("',");
+		}
+		sql.replace(sql.length()-1, sql.length(), ");");
+		logger.debug(sql);
+		PreparedStatement pstmt = conn.prepareStatement(sql.toString());
+		pstmt.execute();
+		rs = pstmt.getGeneratedKeys();
+		if(rs.next()){
+			int id = rs.getInt(1);
+			Method setter = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
+			setter.invoke(data, id);
+		}
+		rs.close();
+		pstmt.close();
 		conn.close();
 	}
 

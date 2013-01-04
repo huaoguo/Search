@@ -11,4 +11,10 @@ public class ReflectionUtils {
 		String methodName = "set" + StringUtils.capitalize(columnName);
 		return clazz.getMethod(methodName, parameterTypes);
 	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static Method getGetter(Class clazz, String columnName) throws NoSuchMethodException, SecurityException {
+		String methodName = "get" + StringUtils.capitalize(columnName);
+		return clazz.getMethod(methodName, new Class[0]);
+	}
 }

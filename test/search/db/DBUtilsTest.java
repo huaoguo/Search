@@ -26,4 +26,14 @@ public class DBUtilsTest extends TestCase{
 		assertEquals("test", dict.getValue());
 	}
 	
+	public void testStoreObject() throws Exception {
+		Dict dict = new Dict();
+		dict.setValue("java");
+		DBUtils.storeObject(dict);
+		assertEquals(2, dict.getId().intValue());
+		Dict dict2 = DBUtils.queryObject(Dict.class, 2);
+		assertNotNull(dict2);
+		assertEquals("java", dict2.getValue());
+	}
+	
 }
