@@ -12,7 +12,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -41,8 +43,10 @@ public class DBUtils {
 			for (int i = 0; i < rsmd.getColumnCount(); i++) {
 				String columnName = rsmd.getColumnName(i + 1);
 				Object data = rs.getObject(i + 1);
-				Method setter = ReflectionUtils.getSetter(clazz, columnName, data.getClass());
-				setter.invoke(result, data);
+				if (data != null) {
+					Method setter = ReflectionUtils.getSetter(clazz, columnName, data.getClass());
+					setter.invoke(result, data);
+				}
 			}
 		}
 		rs.close();
@@ -65,12 +69,13 @@ public class DBUtils {
 		conn.close();
 	}
 
-	private static void runSqlFile(Connection conn,String filepath) throws IOException, SQLException {
+	private static void runSqlFile(Connection conn, String filepath) throws IOException, SQLException {
 		String sql = FileUtils.readFile(filepath);
 		String[] sqls = sql.split("\r\n");
 		Statement stmt = conn.createStatement();
 		for (String s : sqls) {
-			if(s.length() > 0){
+			s = s.trim();
+			if (s.length() > 0 && !s.startsWith("--")) {
 				stmt.execute(s);
 				logger.debug(s);
 			}
@@ -83,13 +88,41 @@ public class DBUtils {
 		Class.forName("org.sqlite.JDBC");
 		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
 		conn.setAutoCommit(false);
-		runSqlFile(conn,Conventions.getSQLFilePath("create_table"));
-		runSqlFile(conn,Conventions.getSQLFilePath("init_data"));
+		runSqlFile(conn, Conventions.getSQLFilePath("create_table"));
+		runSqlFile(conn, Conventions.getSQLFilePath("init_data"));
 		conn.commit();
 		conn.close();
+		ids.clear();
 	}
 
-	public static void storeObject(Object data) throws ClassNotFoundException, SQLException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	@SuppressWarnings("rawtypes")
+	private static Map<Class, Integer> ids = new HashMap<Class, Integer>();
+
+	@SuppressWarnings("rawtypes")
+	private static synchronized Integer getGeneratedId(Class clazz) throws ClassNotFoundException,
+			SQLException {
+		Integer id = ids.get(clazz);
+		if (id == null) {
+			String tableName = Conventions.getTableName(clazz);
+			String sql = "select max(id) from " + tableName + ";";
+			Class.forName("org.sqlite.JDBC");
+			Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
+			PreparedStatement pstmt = conn.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				id = rs.getInt(1);
+			}
+			rs.close();
+			pstmt.close();
+			conn.close();
+		}
+		ids.put(clazz, ++id);
+		return id;
+	}
+
+	public static void storeObject(Object data) throws ClassNotFoundException, SQLException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
 		Class.forName("org.sqlite.JDBC");
 		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
 		String tableName = Conventions.getTableName(data.getClass());
@@ -98,31 +131,76 @@ public class DBUtils {
 		List<String> columns = new ArrayList<>();
 		StringBuilder sql = new StringBuilder();
 		sql.append("insert into ").append(tableName).append("(");
-		while(rs.next()){
+		while (rs.next()) {
 			String columnName = rs.getString("COLUMN_NAME");
-			if(!columnName.equals("id")){
-				columns.add(columnName);
-				sql.append(columnName).append(",");
-			}
+			columns.add(columnName);
+			sql.append(columnName).append(",");
 		}
 		rs.close();
-		sql.replace(sql.length()-1, sql.length(), ") values(");
-		for (String columnName : columns) {
-			Method getter = ReflectionUtils.getGetter(data.getClass(), columnName);
-			Object field = getter.invoke(data, new Object[0]);
-			sql.append("'").append(field.toString()).append("',");
+		sql.replace(sql.length() - 1, sql.length(), ") values(");
+		for (int i = 0; i < columns.size(); i++) {
+			sql.append("?,");
 		}
-		sql.replace(sql.length()-1, sql.length(), ");");
+		sql.replace(sql.length() - 1, sql.length(), ");");
 		logger.debug(sql);
 		PreparedStatement pstmt = conn.prepareStatement(sql.toString());
+		Integer id = getGeneratedId(data.getClass());
+		Method setId = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
+		setId.invoke(data, id);
+		for (int i = 0; i < columns.size(); i++) {
+			String column = columns.get(i);
+			Method getter = ReflectionUtils.getGetter(data.getClass(), column);
+			Object field = getter.invoke(data, new Object[0]);
+			pstmt.setObject(i + 1, field);
+		}
 		pstmt.execute();
-		rs = pstmt.getGeneratedKeys();
-		if(rs.next()){
-			int id = rs.getInt(1);
-			Method setter = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
-			setter.invoke(data, id);
+		pstmt.close();
+		conn.close();
+	}
+
+	@SuppressWarnings("rawtypes")
+	public static void storeObjects(List dataList) throws ClassNotFoundException, SQLException,
+			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException {
+		if (dataList.size() == 0) {
+			return;
+		}
+		Class.forName("org.sqlite.JDBC");
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
+		conn.setAutoCommit(false);
+		String tableName = Conventions.getTableName(dataList.get(0).getClass());
+		DatabaseMetaData dbmd = conn.getMetaData();
+		ResultSet rs = dbmd.getColumns(null, "%", tableName, "%");
+		List<String> columns = new ArrayList<>();
+		StringBuilder sql = new StringBuilder();
+		sql.append("insert into ").append(tableName).append("(");
+		while (rs.next()) {
+			String columnName = rs.getString("COLUMN_NAME");
+			columns.add(columnName);
+			sql.append(columnName).append(",");
 		}
 		rs.close();
+		sql.replace(sql.length() - 1, sql.length(), ") values(");
+		for (int i = 0; i < columns.size(); i++) {
+			sql.append("?,");
+		}
+		sql.replace(sql.length() - 1, sql.length(), ");");
+		logger.debug(sql);
+		PreparedStatement pstmt = conn.prepareStatement(sql.toString());
+		for (Object data : dataList) {
+			Integer id = getGeneratedId(data.getClass());
+			Method setId = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
+			setId.invoke(data, id);
+			for (int i = 0; i < columns.size(); i++) {
+				String column = columns.get(i);
+				Method getter = ReflectionUtils.getGetter(data.getClass(), column);
+				Object field = getter.invoke(data, new Object[0]);
+				pstmt.setObject(i + 1, field);
+			}
+			pstmt.addBatch();
+		}
+		pstmt.executeBatch();
+		conn.commit();
 		pstmt.close();
 		conn.close();
 	}

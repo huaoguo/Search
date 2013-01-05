@@ -4,6 +4,7 @@ public class Dict {
 	//WARN 只能用包装类，不能用原生类型,否则无法通过反射找到get、set方法，持久层会出错
 	private Integer id;
 	private String value;
+	private Float idf;
 
 	public Integer getId() {
 		return id;
@@ -21,4 +22,12 @@ public class Dict {
 		this.value = value;
 	}
 
+	public Float getIdf() {
+		return idf;
+	}
+
+	public void setIdf(Float idf) {
+		this.idf = idf;
+	}
+	
 }

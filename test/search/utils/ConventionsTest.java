@@ -3,6 +3,7 @@ package search.utils;
 import search.db.DBMode;
 import search.db.DBUtils;
 import search.model.Dict;
+import search.model.DictDoc;
 import junit.framework.TestCase;
 
 public class ConventionsTest extends TestCase {
@@ -28,5 +29,6 @@ public class ConventionsTest extends TestCase {
 	public void testGetTableName(){
 		assertEquals("dict", Conventions.getTableName(Dict.class));
 		assertEquals("string_utils", Conventions.getTableName(StringUtils.class));
+		assertEquals("dict_doc", Conventions.getTableName(DictDoc.class));
 	}
 }
