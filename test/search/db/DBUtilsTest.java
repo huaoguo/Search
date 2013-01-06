@@ -42,6 +42,16 @@ public class DBUtilsTest extends TestCase {
 		assertEquals(new Integer(1), dictDoc.getDictId());
 		assertEquals(new Integer(1), dictDoc.getDocId());
 		assertEquals(new Integer(1), dictDoc.getTf());
+
+		Dict dict2 = DBUtils.queryObject(Dict.class, "value='test'");
+		assertNotNull(dict2);
+		assertEquals(new Integer(1), dict2.getId());
+	}
+
+	public void testQueryObjects() throws Exception {
+		List<DictDoc> dictDocs = DBUtils.queryObjects(DictDoc.class, "dict_id=1");
+		assertNotNull(dictDocs);
+		assertEquals(2, dictDocs.size());
 	}
 
 	public void testStoreObject() throws Exception {
@@ -57,14 +67,15 @@ public class DBUtilsTest extends TestCase {
 		doc.setText("有一些草莓的叶子枯了");
 		doc.setUrl("http://www.baidu.com");
 		DBUtils.storeObject(doc);
-		assertEquals(new Integer(2), doc.getId());
-		Doc doc2 = DBUtils.queryObject(Doc.class, 2);
+		Doc doc2 = DBUtils.queryObject(Doc.class, doc.getId());
 		assertNotNull(doc2);
+		assertEquals(doc.getId(), doc2.getId());
 		assertEquals(doc.getText(), doc2.getText());
 		assertEquals(doc.getUrl(), doc2.getUrl());
 	}
 
-	public void testStoreObjects() throws ClassNotFoundException, NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SQLException {
+	public void testStoreObjects() throws ClassNotFoundException, NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException, SQLException {
 		List<Dict> dicts = new ArrayList<>();
 		Dict dict = new Dict();
 		dict.setValue("java");

@@ -54,6 +54,61 @@ public class DBUtils {
 		conn.close();
 		return result;
 	}
+	
+	public static <T> T queryObject(Class<T> clazz, String condition) throws Exception {
+		Class.forName("org.sqlite.JDBC");
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
+		String tableName = Conventions.getTableName(clazz);
+		String sql = "select * from " + tableName + " where " + condition;
+		logger.debug(sql);
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		ResultSet rs = pstmt.executeQuery();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		T result = null;
+		if (rs.next()) {
+			result = clazz.newInstance();
+			for (int i = 0; i < rsmd.getColumnCount(); i++) {
+				String columnName = rsmd.getColumnName(i + 1);
+				Object data = rs.getObject(i + 1);
+				if (data != null) {
+					Method setter = ReflectionUtils.getSetter(clazz, columnName, data.getClass());
+					setter.invoke(result, data);
+				}
+			}
+		}
+		rs.close();
+		pstmt.close();
+		conn.close();
+		return result;
+	}
+	
+	public static <T> List<T> queryObjects(Class<T> clazz, String condition) throws Exception {
+		Class.forName("org.sqlite.JDBC");
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
+		String tableName = Conventions.getTableName(clazz);
+		String sql = "select * from " + tableName + " where " + condition;
+		logger.debug(sql);
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		ResultSet rs = pstmt.executeQuery();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		List<T> result = new ArrayList<>();
+		while (rs.next()) {
+			T t = clazz.newInstance();
+			for (int i = 0; i < rsmd.getColumnCount(); i++) {
+				String columnName = rsmd.getColumnName(i + 1);
+				Object data = rs.getObject(i + 1);
+				if (data != null) {
+					Method setter = ReflectionUtils.getSetter(clazz, columnName, data.getClass());
+					setter.invoke(t, data);
+				}
+			}
+			result.add(t);
+		}
+		rs.close();
+		pstmt.close();
+		conn.close();
+		return result;
+	}
 
 	public static void execute(String sql, Object... params) throws Exception {
 		Class.forName("org.sqlite.JDBC");

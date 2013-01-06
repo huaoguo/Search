@@ -1,0 +1,1 @@
+create table temp(dict_id integer,idf real)insert into temp(dict_id,idf)select dict_id,log(2,cast(2830 as real)/count(doc_id)) idffrom dict_docgroup by dict_idupdate dict set idf = (select temp.idf from temp where temp.dict_id = dict.id)

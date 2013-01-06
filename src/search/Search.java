@@ -46,7 +46,6 @@ public class Search {
 			logger.debug("process: " + file.getAbsolutePath());
 			if (file.isFile()) {
 				processHTML(file);
-				break;
 			} else if (file.isDirectory()) {
 				process(file);
 			}
