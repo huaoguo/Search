@@ -2,6 +2,7 @@ bin/
 logs/
 *.bak
 *.db
+*.db-journal
 .classpath
 .project
 .settings/

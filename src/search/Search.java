@@ -7,11 +7,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -27,7 +25,7 @@ import search.model.Doc;
 public class Search {
 	private static final Logger logger = LogManager.getLogger(Search.class);
 	public static final String path = "E:\\workspace\\heritrix-3.1.0\\mirror";
-	private static Set<Dict> dicts = new HashSet<>();
+	private static Map<String, Dict> dicts = new HashMap<>();
 
 	public static void main(String[] args) throws Exception {
 		DBUtils.createDB();
@@ -43,7 +41,7 @@ public class Search {
 			SQLException {
 		File[] dirs = dir.listFiles();
 		for (File file : dirs) {
-			logger.debug("process: " + file.getAbsolutePath());
+			logger.info("process: " + file.getAbsolutePath());
 			if (file.isFile()) {
 				processHTML(file);
 			} else if (file.isDirectory()) {
@@ -72,7 +70,7 @@ public class Search {
 			if (dict == null) {
 				dict = new Dict();
 				dict.setValue(lexemeText);
-				dicts.add(dict);
+				dicts.put(lexemeText, dict);
 				newDicts.add(dict);
 			}
 			Integer tf = tfMap.get(dict);
@@ -97,12 +95,7 @@ public class Search {
 	}
 
 	private static Dict findDict(String text) {
-		for (Dict dict : dicts) {
-			if (dict.getValue().equals(text)) {
-				return dict;
-			}
-		}
-		return null;
+		return dicts.get(text);
 	}
 
 	private static String cleanHtml(String url) {
