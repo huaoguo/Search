@@ -1,10 +1,12 @@
 package search;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,7 +26,13 @@ import search.utils.Xiangliang.XiangliangBuilder;
 public class Server {
 
 	public static void main(String[] args) throws Exception {
-		String query = "幽鬼出门装备";
+		List<Result> results = search("幽鬼出门装备");
+		for (Result result : results) {
+			System.out.println("doc: " + result.docId + ", cosineValue: " + result.cosineValue);
+		}
+	}
+
+	public static List<Result> search(String query) throws IOException, Exception, ClassNotFoundException, SQLException {
 		IKSegmenter seg = new IKSegmenter(new StringReader(query), false);
 		Lexeme lex = null;
 		List<Dict> dicts = new ArrayList<>();
@@ -95,9 +103,12 @@ public class Server {
 			}
 
 		});
-		for (Result result : results) {
-			System.out.println("doc: " + result.docId + ", cosineValue: " + result.cosineValue);
-		}
+		return results;
+	}
+	
+	public static class Result {
+		public int docId;
+		double cosineValue;
 	}
 
 }
@@ -106,9 +117,4 @@ class Record {
 	int docId;
 	int dictId;
 	double weight;
-}
-
-class Result {
-	int docId;
-	double cosineValue;
 }
