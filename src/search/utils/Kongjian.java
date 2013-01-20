@@ -6,7 +6,7 @@ import java.util.List;
 import search.utils.Xiangliang.XiangliangBuilder;
 
 public class Kongjian {
-	private List<Integer> weidus = new ArrayList<>();
+	private List<Object> weidus = new ArrayList<>();
 	
 	Kongjian(){
 	}
@@ -15,12 +15,12 @@ public class Kongjian {
 		return new KongjianBuilder();
 	}
 
-	public int getWeiduIndex(int dictId) {
-		return weidus.indexOf(dictId) + 1;
+	public int getWeiduIndex(Object weidu) {
+		return weidus.indexOf(weidu) + 1;
 	}
 
-	void addWeidu(int dictId) {
-		weidus.add(dictId);
+	void addWeidu(Object weidu) {
+		weidus.add(weidu);
 	}
 
 	public XiangliangBuilder buildXiangliang() {
@@ -34,8 +34,8 @@ public class Kongjian {
 	public static class KongjianBuilder {
 		private Kongjian kj = new Kongjian();
 
-		public KongjianBuilder addWeidu(int dictId) {
-			kj.addWeidu(dictId);
+		public KongjianBuilder addWeidu(Object weidu) {
+			kj.addWeidu(weidu);
 			return this;
 		}
 

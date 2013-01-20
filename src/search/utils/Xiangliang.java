@@ -48,8 +48,8 @@ public class Xiangliang {
 			xl = new Xiangliang(kj);
 		}
 
-		public XiangliangBuilder setValue(int dictId, double weight) {
-			int index = kj.getWeiduIndex(dictId);
+		public XiangliangBuilder setValue(Object weidu, double weight) {
+			int index = kj.getWeiduIndex(weidu);
 			xl.setValue(index, weight);
 			return this;
 		}
