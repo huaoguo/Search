@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.wltea.analyzer.core.IKSegmenter;
 import org.wltea.analyzer.core.Lexeme;
 
@@ -24,6 +26,7 @@ import search.utils.Kongjian.KongjianBuilder;
 import search.utils.Xiangliang.XiangliangBuilder;
 
 public class Server {
+	private static final Logger logger = LogManager.getLogger(Server.class);
 
 	public static void main(String[] args) throws Exception {
 		List<Result> results = search("幽鬼出门装备");
@@ -57,7 +60,7 @@ public class Server {
 		}
 		sql.deleteCharAt(sql.length() - 1);
 		sql.append(") order by doc.id,dict.id,weight desc");
-		System.out.println(sql);
+		logger.debug(sql);
 		Class.forName("org.sqlite.JDBC");
 		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
 		PreparedStatement pstmt = conn.prepareStatement(sql.toString());
