@@ -109,6 +109,32 @@ public class DBUtils {
 		conn.close();
 		return result;
 	}
+	
+	public static <T> List<T> executeQuery(Class<T> clazz,String sql) throws Exception{
+		List<T> results = new ArrayList<>();
+		Class.forName("org.sqlite.JDBC");
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + Conventions.getDBPath());
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		ResultSet rs = pstmt.executeQuery();
+		ResultSetMetaData rsmd = rs.getMetaData();
+		T result;
+		while(rs.next()){
+			result = clazz.newInstance();
+			for (int i = 0; i < rsmd.getColumnCount(); i++) {
+				String columnName = rsmd.getColumnName(i + 1);
+				Object data = rs.getObject(i + 1);
+				if (data != null) {
+					Method setter = ReflectionUtils.getSetter(clazz, columnName, data.getClass());
+					setter.invoke(result, data);
+				}
+			}
+			results.add(result);
+		}
+		rs.close();
+		pstmt.close();
+		conn.close();
+		return results;
+	}
 
 	public static void execute(String sql, Object... params) throws Exception {
 		Class.forName("org.sqlite.JDBC");
