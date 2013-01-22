@@ -33,6 +33,7 @@ public class DBUtilsTest extends TestCase {
 		Doc doc = DBUtils.queryObject(Doc.class, 1);
 		assertNotNull(doc);
 		assertEquals(new Integer(1), doc.getId());
+		assertEquals("test", doc.getTitle());
 		assertEquals("我们要做一些test", doc.getText());
 		assertEquals("http://www.baidu.com", doc.getUrl());
 
@@ -64,6 +65,7 @@ public class DBUtilsTest extends TestCase {
 		assertEquals(dict.getValue(), dict2.getValue());
 
 		Doc doc = new Doc();
+		doc.setTitle("百度知道");
 		doc.setText("有一些草莓的叶子枯了");
 		doc.setUrl("http://www.baidu.com");
 		DBUtils.storeObject(doc);
