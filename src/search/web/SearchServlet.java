@@ -31,12 +31,14 @@ public class SearchServlet extends HttpServlet {
 	
 	private List<Doc> search(String query) throws Exception{
 		List<Result> results = Server.search(query);
-		StringBuilder where = new StringBuilder("id in (");
-		for (int i = 0; i < 10; i++) {
-			where.append(results.get(i).docId).append(",");
+		StringBuilder sql = new StringBuilder();
+		for (int i = 0; i < 30; i++) {
+			if(i > 0){
+				sql.append(" union all ");
+			}
+			sql.append("select * from doc where id = ").append(results.get(i).docId);
 		}
-		where.replace(where.length() - 1, where.length(), ")");
-		List<Doc> docs = DBUtils.queryObjects(Doc.class, where.toString());
+		List<Doc> docs = DBUtils.executeQuery(Doc.class, sql.toString());
 		return docs;
 	}
 }
