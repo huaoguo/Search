@@ -47,4 +47,19 @@ public class KongjianTest extends TestCase {
 		assertNotNull(cosine2);
 	}
 	
+	public void testCosine2(){
+		Kongjian kj = Kongjian.build().addWeidu(1690).addWeidu(1847).addWeidu(22283).toKongjian();
+		Xiangliang xl = kj.buildXiangliang().setValue(1690, 4.54696154482131)
+				.setValue(1847, 4.6920118776246)
+				.setValue(22283, 9.30498875451535).toXiangliang();
+		Xiangliang xl1 = kj.buildXiangliang().setValue(1690, 4.54696154482131)
+				.setValue(1847, 4.6920118776246).toXiangliang();
+		Xiangliang xl2 = kj.buildXiangliang().setValue(1690, 4.54696154482131)
+				.setValue(1847, 4.54696154482131)
+				.setValue(22283, 9.30498875451535).toXiangliang();
+		double c1 = Xiangliang.Cosine(xl, xl1);
+		double c2 = Xiangliang.Cosine(xl, xl2);
+		assertTrue(c1 < c2);
+	}
+	
 }
