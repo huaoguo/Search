@@ -13,7 +13,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.htmlparser.beans.StringBean;
+import org.htmlparser.util.ParserException;
 import org.wltea.analyzer.core.IKSegmenter;
 import org.wltea.analyzer.core.Lexeme;
 
@@ -21,6 +21,7 @@ import search.db.DBUtils;
 import search.model.Dict;
 import search.model.DictDoc;
 import search.model.Doc;
+import search.utils.HtmlFile;
 
 public class Search {
 	private static final Logger logger = LogManager.getLogger(Search.class);
@@ -38,11 +39,12 @@ public class Search {
 
 	private static void process(File dir) throws IOException, ClassNotFoundException, NoSuchMethodException,
 			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			SQLException {
+			SQLException, ParserException {
 		File[] dirs = dir.listFiles();
 		for (File file : dirs) {
-			logger.info("process: " + file.getAbsolutePath());
-			if (file.isFile()) {
+			if (file.isFile()
+					&& (file.getName().endsWith(".html") || file.getName().endsWith(".htm") || file.getName()
+							.endsWith(".shtml"))) {
 				processHTML(file);
 			} else if (file.isDirectory()) {
 				process(file);
@@ -52,14 +54,16 @@ public class Search {
 
 	private static void processHTML(File file) throws IOException, ClassNotFoundException,
 			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, SQLException {
+			InvocationTargetException, SQLException, ParserException {
+		logger.info("process: " + file.getAbsolutePath());
 		long t1 = System.currentTimeMillis();
-		String text = cleanHtml("file:///" + file.getAbsolutePath());
+		HtmlFile hf = new HtmlFile("file:///" + file.getAbsolutePath());
 		Doc doc = new Doc();
-		doc.setText(text);
+		doc.setTitle(hf.getTitle());
+		doc.setText(hf.getPlainTextContent());
 		doc.setUrl(getHttpUrl(file));
 		DBUtils.storeObject(doc);
-		IKSegmenter seg = new IKSegmenter(new StringReader(text), false);
+		IKSegmenter seg = new IKSegmenter(new StringReader(hf.getPlainTextContent()), false);
 		Lexeme lex = null;
 		Map<Dict, Integer> tfMap = new HashMap<Dict, Integer>();
 		List<Dict> newDicts = new ArrayList<>();
@@ -96,18 +100,6 @@ public class Search {
 
 	private static Dict findDict(String text) {
 		return dicts.get(text);
-	}
-
-	private static String cleanHtml(String url) {
-		StringBean sb = new StringBean();
-		sb.setLinks(false);
-		// 设置将不间断空格由正规空格所替代
-		sb.setReplaceNonBreakingSpaces(true);
-		// 设置将一序列空格由一个单一空格所代替
-		sb.setCollapse(true);
-		// 传入要解析的URL
-		sb.setURL(url);
-		return sb.getStrings();
 	}
 
 	private static String getHttpUrl(File file) {
