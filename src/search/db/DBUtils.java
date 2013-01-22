@@ -180,7 +180,7 @@ public class DBUtils {
 	private static Map<Class, Integer> ids = new HashMap<Class, Integer>();
 
 	@SuppressWarnings("rawtypes")
-	private static synchronized Integer getGeneratedId(Class clazz) throws ClassNotFoundException,
+	public static synchronized Integer getGeneratedId(Class clazz) throws ClassNotFoundException,
 			SQLException {
 		Integer id = ids.get(clazz);
 		if (id == null) {
@@ -225,9 +225,12 @@ public class DBUtils {
 		sql.replace(sql.length() - 1, sql.length(), ");");
 		logger.debug(sql);
 		PreparedStatement pstmt = conn.prepareStatement(sql.toString());
-		Integer id = getGeneratedId(data.getClass());
-		Method setId = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
-		setId.invoke(data, id);
+		Method getId = ReflectionUtils.getGetter(data.getClass(), "id");
+		if(getId.invoke(data, new Object[0]) == null){
+			Integer id = getGeneratedId(data.getClass());
+			Method setId = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
+			setId.invoke(data, id);
+		}
 		for (int i = 0; i < columns.size(); i++) {
 			String column = columns.get(i);
 			Method getter = ReflectionUtils.getGetter(data.getClass(), column);
@@ -269,9 +272,12 @@ public class DBUtils {
 		logger.debug(sql);
 		PreparedStatement pstmt = conn.prepareStatement(sql.toString());
 		for (Object data : dataList) {
-			Integer id = getGeneratedId(data.getClass());
-			Method setId = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
-			setId.invoke(data, id);
+			Method getId = ReflectionUtils.getGetter(data.getClass(), "id");
+			if(getId.invoke(data, new Object[0]) == null){
+				Integer id = getGeneratedId(data.getClass());
+				Method setId = ReflectionUtils.getSetter(data.getClass(), "id", Integer.class);
+				setId.invoke(data, id);
+			}
 			for (int i = 0; i < columns.size(); i++) {
 				String column = columns.get(i);
 				Method getter = ReflectionUtils.getGetter(data.getClass(), column);

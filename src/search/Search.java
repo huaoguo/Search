@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -27,14 +28,43 @@ public class Search {
 	private static final Logger logger = LogManager.getLogger(Search.class);
 	public static final String path = "E:\\workspace\\heritrix-3.1.0\\mirror";
 	private static Map<String, Dict> dicts = new HashMap<>();
+	private static boolean stopped = false;
 
 	public static void main(String[] args) throws Exception {
-		DBUtils.createDB();
-		File file = new File(path);
-		File[] dirs = file.listFiles();
-		for (File d : dirs) {
-			process(d);
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					DBUtils.createDB();
+					File file = new File(path);
+					File[] dirs = file.listFiles();
+					for (File d : dirs) {
+						if (stopped) {
+							logger.info("正在停止程序...");
+							break;
+						}
+						try {
+							process(d);
+						} catch (Exception e) {
+							logger.info(e.getMessage(), e);
+						}
+					}
+					storeCachedObjects();
+				} catch (ClassNotFoundException | SQLException | IOException | NoSuchMethodException
+						| SecurityException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}.start();
+		Scanner scn = new Scanner(System.in);
+		while (scn.hasNext()) {
+			if (scn.nextLine().equals("exit")) {
+				stopped = true;
+				break;
+			}
 		}
+		scn.close();
 	}
 
 	private static void process(File dir) throws IOException, ClassNotFoundException, NoSuchMethodException,
@@ -52,6 +82,11 @@ public class Search {
 		}
 	}
 
+	private static List<Dict> cachedDicts = new ArrayList<>();
+	private static List<Doc> cachedDocs = new ArrayList<>();
+	private static List<DictDoc> cachedDictDocs = new ArrayList<>();
+	private static int count = 0;
+
 	private static void processHTML(File file) throws IOException, ClassNotFoundException,
 			NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, SQLException, ParserException {
@@ -59,23 +94,24 @@ public class Search {
 		long t1 = System.currentTimeMillis();
 		HtmlFile hf = new HtmlFile("file:///" + file.getAbsolutePath());
 		Doc doc = new Doc();
+		doc.setId(DBUtils.getGeneratedId(Doc.class));
 		doc.setTitle(hf.getTitle());
 		doc.setText(hf.getPlainTextContent());
 		doc.setUrl(getHttpUrl(file));
-		DBUtils.storeObject(doc);
+		cachedDocs.add(doc);
 		IKSegmenter seg = new IKSegmenter(new StringReader(hf.getPlainTextContent()), false);
 		Lexeme lex = null;
 		Map<Dict, Integer> tfMap = new HashMap<Dict, Integer>();
-		List<Dict> newDicts = new ArrayList<>();
 		while ((lex = seg.next()) != null) {
 			String lexemeText = lex.getLexemeText();
 			logger.debug(lexemeText);
-			Dict dict = findDict(lexemeText);
+			Dict dict = dicts.get(lexemeText);
 			if (dict == null) {
 				dict = new Dict();
+				dict.setId(DBUtils.getGeneratedId(Dict.class));
 				dict.setValue(lexemeText);
 				dicts.put(lexemeText, dict);
-				newDicts.add(dict);
+				cachedDicts.add(dict);
 			}
 			Integer tf = tfMap.get(dict);
 			if (tf == null) {
@@ -84,22 +120,34 @@ public class Search {
 				tfMap.put(dict, tf + 1);
 			}
 		}
-		DBUtils.storeObjects(newDicts);
-		List<DictDoc> dictDocs = new ArrayList<>();
 		for (Entry<Dict, Integer> entry : tfMap.entrySet()) {
 			DictDoc dd = new DictDoc();
+			dd.setId(DBUtils.getGeneratedId(DictDoc.class));
 			dd.setDictId(entry.getKey().getId());
 			dd.setDocId(doc.getId());
 			dd.setTf(entry.getValue());
-			dictDocs.add(dd);
+			cachedDictDocs.add(dd);
 		}
-		DBUtils.storeObjects(dictDocs);
 		long cost = System.currentTimeMillis() - t1;
 		logger.info("词典目前共有: " + dicts.size() + " 个词，用时:" + cost + "ms");
+		count++;
+		if (count % 1000 == 0) {
+			storeCachedObjects();
+		}
 	}
 
-	private static Dict findDict(String text) {
-		return dicts.get(text);
+	private static void storeCachedObjects() throws ClassNotFoundException, SQLException,
+			NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+		long t2 = System.currentTimeMillis();
+		DBUtils.storeObjects(cachedDicts);
+		DBUtils.storeObjects(cachedDocs);
+		DBUtils.storeObjects(cachedDictDocs);
+		long cost2 = System.currentTimeMillis() - t2;
+		logger.info(String.format("存储了 %s 个词，%s 个文档，%s 个词-文档，用时 %s ms", cachedDicts.size(),
+				cachedDocs.size(), cachedDictDocs.size(), cost2));
+		cachedDicts.clear();
+		cachedDocs.clear();
+		cachedDictDocs.clear();
 	}
 
 	private static String getHttpUrl(File file) {
