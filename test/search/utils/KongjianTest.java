@@ -62,4 +62,18 @@ public class KongjianTest extends TestCase {
 		assertTrue(c1 < c2);
 	}
 	
+	public void testCosine3(){
+		Kongjian kj = Kongjian.build().addWeidu("幽鬼").addWeidu("出").addWeidu("装").toKongjian();
+		Xiangliang xl = kj.buildXiangliang().setValue("幽鬼", 9.12379809125185)
+				.setValue("出", 3.2580648204001)
+				.setValue("装", 4.38233110485071).toXiangliang();
+		Xiangliang xl1 = kj.buildXiangliang().setValue("幽鬼", 3.71468922286683)
+				.setValue("出", 1.32649781973432).setValue("装", 1.81553717200958).toXiangliang();
+		Xiangliang xl2 = kj.buildXiangliang().setValue("幽鬼", 4.92033397063939)
+				.setValue("出", 1.33813376552147).setValue("装", 1.79988598949226).toXiangliang();
+		double c1 = Xiangliang.Cosine(xl, xl1);
+		double c2 = Xiangliang.Cosine(xl, xl2);
+		assertTrue(c1 > c2);
+	}
+	
 }
