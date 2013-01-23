@@ -32,7 +32,7 @@ public class SearchServlet extends HttpServlet {
 	private List<Doc> search(String query) throws Exception{
 		List<Result> results = Server.search(query);
 		StringBuilder sql = new StringBuilder();
-		for (int i = 0; i < 30; i++) {
+		for (int i = 0; i < 30 && i < results.size(); i++) {
 			if(i > 0){
 				sql.append(" union all ");
 			}
