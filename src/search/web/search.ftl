@@ -46,13 +46,28 @@
 			<div>
 				<#list docs as d>
 					<div class="item">
-						<a href="${d.url}" target="_blank">${d.url}</a><br />
+						<a href="${d.url}" target="_blank" style="font-size: 16px">
+						<#if d.title?length &gt; 40>
+							${d.title?substring(0,40)}
+						<#else>
+							${d.title}
+						</#if>
+						</a>
+						<br />
 						<#if d.text?length &gt; 100>
 							${d.text?substring(0,100)}
 						<#else>
 							${d.text}
 						</#if>
-						<a href="/snapshot?id=${d.id?c}" target="_blank">ÍøÒ³¿ìÕÕ</a>
+						<br/>
+						<span style="color:green">
+						<#if d.url?length &gt; 50>
+						${d.url?substring(0,50)}...
+						<#else>
+						${d.url}
+						</#if>
+						</span>
+						<a href="/snapshot?id=${d.id?c}" target="_blank" style="color:#666">ÍøÒ³¿ìÕÕ</a>
 					</div>
 				</#list>
 			</div>
