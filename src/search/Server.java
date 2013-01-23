@@ -42,6 +42,7 @@ public class Server {
 		KongjianBuilder kjBuilder = Kongjian.build();
 		while ((lex = seg.next()) != null) {
 			Dict dict = DBUtils.queryObject(Dict.class, "value='" + lex.getLexemeText() + "'");
+			logger.debug("word:" + dict.getValue() + ",idf:" + dict.getIdf());
 			dicts.add(dict);
 			kjBuilder.addWeidu(dict.getId());
 		}
@@ -52,7 +53,7 @@ public class Server {
 		}
 		Xiangliang xl = xlBuilder.toXiangliang();
 		StringBuilder sql = new StringBuilder();
-		sql.append("select doc.id doc_id,dict.id dict_id,dict.idf * dd.tf2 weight from dict_doc dd "
+		sql.append("select doc.id doc_id,dict.id dict_id,dict.idf * dd.tf3 weight from dict_doc dd "
 				+ "inner join dict on dd.dict_id = dict.id " + "inner join doc on dd.doc_id = doc.id "
 				+ "where dict.id in (");
 		for (Dict d : dicts) {
@@ -73,7 +74,7 @@ public class Server {
 			r.weight = rs.getDouble("weight");
 			records.add(r);
 		}
-		System.out.println(records.size());
+		logger.debug("УќжаЃК" + records.size());
 		rs.close();
 		pstmt.close();
 		conn.close();
