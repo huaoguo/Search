@@ -37,13 +37,13 @@ public class KongjianTest extends TestCase {
 				.setValue(1982, 35.372d)
 				.setValue(389, 87.43921d)
 				.toXiangliang();
-		double cosine = Xiangliang.Cosine(xl,xl2);
+		double cosine = Xiangliang.cosine(xl,xl2);
 		assertEquals(1d, cosine);
 		Xiangliang xl3 = kj.buildXiangliang()
 				.setValue(1982, 98.576d)
 				.setValue(389, 20.74d)
 				.toXiangliang();
-		double cosine2 = Xiangliang.Cosine(xl,xl3);
+		double cosine2 = Xiangliang.cosine(xl,xl3);
 		assertNotNull(cosine2);
 	}
 	
@@ -57,8 +57,8 @@ public class KongjianTest extends TestCase {
 		Xiangliang xl2 = kj.buildXiangliang().setValue(1690, 4.54696154482131)
 				.setValue(1847, 4.54696154482131)
 				.setValue(22283, 9.30498875451535).toXiangliang();
-		double c1 = Xiangliang.Cosine(xl, xl1);
-		double c2 = Xiangliang.Cosine(xl, xl2);
+		double c1 = Xiangliang.cosine(xl, xl1);
+		double c2 = Xiangliang.cosine(xl, xl2);
 		assertTrue(c1 < c2);
 	}
 	
@@ -71,9 +71,16 @@ public class KongjianTest extends TestCase {
 				.setValue("出", 1.32649781973432).setValue("装", 1.81553717200958).toXiangliang();
 		Xiangliang xl2 = kj.buildXiangliang().setValue("幽鬼", 4.92033397063939)
 				.setValue("出", 1.33813376552147).setValue("装", 1.79988598949226).toXiangliang();
-		double c1 = Xiangliang.Cosine(xl, xl1);
-		double c2 = Xiangliang.Cosine(xl, xl2);
+		double c1 = Xiangliang.cosine(xl, xl1);
+		double c2 = Xiangliang.cosine(xl, xl2);
 		assertTrue(c1 > c2);
+	}
+	
+	public void testCosine4(){
+		Kongjian kj = Kongjian.build().addWeidu(1).toKongjian();
+		Xiangliang xl = kj.buildXiangliang().setValue(1, 7.03633525000152d).toXiangliang();
+		Xiangliang xl2 = kj.buildXiangliang().setValue(1, 2.85256834459521d).toXiangliang();
+		System.out.println(Xiangliang.cosine(xl, xl2));
 	}
 	
 }

@@ -86,7 +86,7 @@ public class Server {
 			if (previous != null && previous.docId != record.docId) {
 				Result result = new Result();
 				result.docId = previous.docId;
-				result.cosineValue = Xiangliang.Cosine(xl, xlBuilder2.toXiangliang());
+				result.cosineValue = Xiangliang.cosine(xl, xlBuilder2.toXiangliang());
 				results.add(result);
 				xlBuilder2 = kj.buildXiangliang();
 			}

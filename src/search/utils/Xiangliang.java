@@ -23,7 +23,7 @@ public class Xiangliang {
 		return value;
 	}
 
-	public static double Cosine(Xiangliang xl, Xiangliang xl2) {
+	public static double cosine(Xiangliang xl, Xiangliang xl2) {
 		if (!xl.kj.equals(xl2.kj)) {
 			throw new RuntimeException("can not be compared!");
 		}
