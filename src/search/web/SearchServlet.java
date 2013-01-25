@@ -8,6 +8,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import search.Server;
 import search.Server.Result;
 import search.db.DBUtils;
@@ -15,6 +18,8 @@ import search.model.Doc;
 
 @SuppressWarnings("serial")
 public class SearchServlet extends HttpServlet {
+	private static final Logger logger = LogManager.getLogger(SearchServlet.class);
+	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
 			IOException {
@@ -38,7 +43,9 @@ public class SearchServlet extends HttpServlet {
 			}
 			sql.append("select * from doc where id = ").append(results.get(i).docId);
 		}
+		long t = System.currentTimeMillis();
 		List<Doc> docs = DBUtils.executeQuery(Doc.class, sql.toString());
+		logger.debug("≤È—Ødocs£¨”√ ±£∫" + (System.currentTimeMillis() - t) + "ms");
 		return docs;
 	}
 }
