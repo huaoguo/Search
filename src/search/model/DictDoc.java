@@ -37,5 +37,13 @@ public class DictDoc {
 	public void setTf(Integer tf) {
 		this.tf = tf;
 	}
+	
+	public Integer getTf2() {
+		return 0;
+	}
+	
+	public Integer getTf3() {
+		return 0;
+	}
 
 }
