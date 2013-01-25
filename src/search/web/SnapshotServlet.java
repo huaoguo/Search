@@ -23,7 +23,7 @@ public class SnapshotServlet extends HttpServlet {
 		try {
 			String url = DBUtils.queryObject(Doc.class, Integer.parseInt(id)).getUrl();
 			url = url.replace("http://", "").replace("/", "\\");
-			String filepath = Search.path + "\\" + url;
+			String filepath = Search.path + "\\already\\" + url;
 			String content = FileUtils.readHtmlFile(filepath);
 			resp.setContentType("text/html;charset=GBK");
 			PrintWriter pw = resp.getWriter();
