@@ -3,6 +3,7 @@ package search.model;
 public class Doc {
 	private Integer id;
 	private String title;
+	private String keywords;
 	private String text;
 	private String url;
 
@@ -20,6 +21,14 @@ public class Doc {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	public String getKeywords() {
+		return keywords;
+	}
+
+	public void setKeywords(String keywords) {
+		this.keywords = keywords;
 	}
 
 	public String getText() {

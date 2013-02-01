@@ -36,6 +36,11 @@ public class Search {
 			public void run() {
 				try {
 					DBUtils.createDB();
+					List<Dict> dictList = DBUtils.queryObjects(Dict.class, "1 = 1");
+					for (Dict dict : dictList) {
+						dicts.put(dict.getValue(), dict);
+					}
+					dictList.clear();
 					File file = new File(path);
 					File[] dirs = file.listFiles();
 					for (File d : dirs) {
@@ -44,15 +49,16 @@ public class Search {
 							break;
 						}
 						try {
+							if(d.getName().contains("already")){
+								continue;
+							}
 							process(d);
 						} catch (Exception e) {
 							logger.info(e.getMessage(), e);
 						}
 					}
 					storeCachedObjects();
-				} catch (ClassNotFoundException | SQLException | IOException | NoSuchMethodException
-						| SecurityException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
@@ -93,9 +99,13 @@ public class Search {
 		logger.info("process: " + file.getAbsolutePath());
 		long t1 = System.currentTimeMillis();
 		HtmlFile hf = new HtmlFile("file:///" + file.getAbsolutePath());
+		if(hf.getTitle().contains("404") || hf.getTitle().contains("302")){
+			return;
+		}
 		Doc doc = new Doc();
 		doc.setId(DBUtils.getGeneratedId(Doc.class));
 		doc.setTitle(hf.getTitle());
+		doc.setKeywords(hf.getKeywords());
 		doc.setText(hf.getPlainTextContent());
 		doc.setUrl(getHttpUrl(file));
 		cachedDocs.add(doc);
@@ -154,8 +164,11 @@ public class Search {
 		String url = file.getAbsolutePath().replace(Search.path + "\\", "");
 		String[] tokens = url.split("\\\\");
 		StringBuilder sb = new StringBuilder("http://");
-		for (String t : tokens) {
-			sb.append(t).append("/");
+		for (int i=0;i<tokens.length;i++) {
+			if(i > 0){
+				sb.append("/");
+			}
+			sb.append(tokens[i]);
 		}
 		return sb.toString();
 	}
